@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='netort',
-    version='0.2.8',
+    version='0.6.1',
     description='common library for yandex-load org',
     longer_description='''
 common library for yandex-load org
@@ -12,13 +12,13 @@ common library for yandex-load org
     url='http://github.com/yandex-load/netort',
     packages=find_packages(exclude=["tests", "tmp", "docs", "data"]),
     install_requires=[
-        'pyserial', 'requests', 'cerberus'
+        'pyserial', 'requests', 'retrying', 'cerberus', 'six', 'pandas>=0.23.0',
     ],
     setup_requires=[
         # 'pytest-runner', 'flake8',
     ],
     tests_require=[
-        # 'pytest',
+        'pytest', 'pytest-runner', 'mock'
     ],
     license='MPLv2',
     classifiers=[
@@ -37,6 +37,9 @@ common library for yandex-load org
         'Programming Language :: Python :: 3',
     ],
     entry_points={
+        'console_scripts': [
+            'phout_upload = netort.cli:main',
+        ],
     },
     package_data={
     },

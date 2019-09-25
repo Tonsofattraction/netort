@@ -1,20 +1,31 @@
 import subprocess
 import shlex
 import logging
+from six import string_types
 
 
-# FIXME poll_period?
+# FIXME poll_period is not used anywhere
 def execute(cmd, shell=False, poll_period=1.0, catch_out=False):
+    """Execute UNIX command and wait for its completion
+
+    Args:
+        cmd (str or list): command to execute
+        shell (bool): invoke inside shell environment
+        catch_out (bool): collect process' output
+    
+    Returns:
+        returncode (int): process return code
+        stdout (str): collected process stdout (only if catch_out set to true)
+        stderr (str): collected process stderr (only if catch_out set to true)
     """
-    Wrapper for Popen
-    """
+    # FIXME: move to module level
     log = logging.getLogger(__name__)
     log.debug("Starting: %s", cmd)
 
     stdout = ""
     stderr = ""
 
-    if not shell and isinstance(cmd, basestring):
+    if not shell and isinstance(cmd, string_types):
         cmd = shlex.split(cmd)
 
     if catch_out:
@@ -38,6 +49,7 @@ def execute(cmd, shell=False, poll_period=1.0, catch_out=False):
     return returncode, stdout, stderr
 
 
+# FIXME: remove this dumb popen wrapper
 def popen(cmnd):
     return subprocess.Popen(
         cmnd,

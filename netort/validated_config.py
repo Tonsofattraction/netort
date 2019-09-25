@@ -1,3 +1,4 @@
+# TODO: merge with Yandex Tank validator
 import yaml
 import imp
 import pkg_resources
@@ -15,7 +16,7 @@ class ValidationError(Exception):
 
 
 def load_yaml_schema(path):
-    with open(path, 'r') as f:
+    with open(path) as f:
         return yaml.load(f)
 
 
@@ -77,7 +78,7 @@ class ValidatedConfig(object):
         try:
             self.validated[section][option]
         except KeyError:
-            if default:
+            if default is not None:
                 return default
             else:
                 raise KeyError()
@@ -85,7 +86,7 @@ class ValidatedConfig(object):
 
     def get_enabled_sections(self):
         return [
-            section_name for section_name, section_config in self.__raw_config_dict.iteritems()
+            section_name for section_name, section_config in self.__raw_config_dict.items()
             if section_config.get('enabled', False)
         ]
 

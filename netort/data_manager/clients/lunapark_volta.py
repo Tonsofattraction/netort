@@ -138,9 +138,9 @@ class LunaparkVoltaClient(AbstractClient):
                 'Symlink %s/%s created for job: %s', self.symlink_artifacts_path, self.job_number, self.job.job_id
             )
 
-    def put(self, df):
+    def put(self, data_type, df):
         if not self.failed.is_set():
-            self.pending_queue.put(df)
+            self.pending_queue.put((data_type, df))
         else:
             logger.debug('Skipped incoming data chunk due to failures')
 
@@ -247,7 +247,7 @@ class WorkerThread(threading.Thread):
         except queue.Empty:
             time.sleep(1)
         else:
-            for metric_local_id, df_grouped_by_id in df.groupby(level=0):
+            for metric_local_id, df_grouped_by_id in df.groupby(level=0, sort=False):
                 df_grouped_by_id['key_date'] = self.client.key_date
                 df_grouped_by_id['test_id'] = "{key_date}_{local_job_id}".format(
                     key_date=self.client.key_date,
@@ -256,7 +256,7 @@ class WorkerThread(threading.Thread):
                 metric = self.client.job.manager.get_metric_by_id(metric_local_id)
                 if metric.type == 'events':
                     try:
-                        gb = df_grouped_by_id.groupby('custom_metric_type')
+                        gb = df_grouped_by_id.groupby('custom_metric_type', sort=False)
                     except KeyError:
                         self.__send_this_type(df_grouped_by_id, 'unknown')
                     else:

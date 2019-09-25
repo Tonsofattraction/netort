@@ -1,9 +1,14 @@
+import logging
 import queue as q
 import threading
 import time
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_nowait_from_queue(queue):
+    """ Collect all immediately available items from a queue """
     data = []
     for _ in range(queue.qsize()):
         try:
@@ -27,11 +32,16 @@ class Drain(threading.Thread):
         self.setDaemon(True)  # bdk+ytank stuck w/o this at join of this thread
 
     def run(self):
-        for item in self.source:
-            self.destination.put(item)
-            if self._interrupted.is_set():
-                break
-        self._finished.set()
+        try:
+            for item in self.source:
+                self.destination.put(item)
+                if self._interrupted.is_set():
+                    break
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            self._interrupted.set()
+        finally:
+            self._finished.set()
 
     def wait(self, timeout=None):
         self._finished.wait(timeout=timeout)
@@ -41,14 +51,23 @@ class Drain(threading.Thread):
 
 
 class Tee(threading.Thread):
-    """
-    Drain a queue and put its contents to list of destinations
+    """Copy items from one queue to multiple in a thread.
+    
+    Note:
+        Items are passed by reference.
     """
 
     def __init__(self, source, destination, type):
+        """
+        Args:
+            source (queue): where to get items from
+            destination (list): list of queues where to put items from the source
+            type (string): ???
+        """
+        # TODO: what is type?!
         super(Tee, self).__init__()
         self.source = source
-        self.destination = destination
+        self.destination = destination # TODO: this is actually a list of destinations. Rename.
         self.type = type
         self._finished = threading.Event()
         self._interrupted = threading.Event()
@@ -76,6 +95,7 @@ class Tee(threading.Thread):
         self._interrupted.set()
 
 
+# TODO: does it really chop anything?
 class Chopper(object):
     def __init__(self, source):
         self.source = source
