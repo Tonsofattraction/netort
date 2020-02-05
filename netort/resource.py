@@ -99,7 +99,7 @@ class ResourceManager(object):
                 opener = signature[1](self.path, **kwargs)
                 break
         if not opener:
-            opener = FileOpe4ner(self.path, **kwargs)
+            opener = FileOpener(self.path, **kwargs)
         return opener
 
 
