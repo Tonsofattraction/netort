@@ -83,7 +83,7 @@ class ResourceManager(object):
             content = resource.read()
         return content
 
-    def get_opener(self, path):
+    def get_opener(self, path, **kwargs):
         """
         Args:
             path: str, resource file url or resource file absolute/relative path.
@@ -96,10 +96,10 @@ class ResourceManager(object):
         # FIXME this parser/matcher should use `urlparse` stdlib
         for opener_name, signature in self.openers.items():
             if self.path.startswith(signature[0]):
-                opener = signature[1](self.path)
+                opener = signature[1](self.path, **kwargs)
                 break
         if not opener:
-            opener = FileOpener(self.path)
+            opener = FileOpe4ner(self.path, **kwargs)
         return opener
 
 
@@ -107,7 +107,7 @@ class SerialOpener(object):
     """ Serial device opener.
     """
 
-    def __init__(self, device, baud_rate=230400, read_timeout=1):
+    def __init__(self, device, baud_rate=230400, read_timeout=1, **kwargs):
         self.baud_rate = baud_rate
         self.device = device
         self.read_timeout = read_timeout
@@ -124,7 +124,7 @@ class FileOpener(object):
     """ File opener.
     """
 
-    def __init__(self, f_path):
+    def __init__(self, f_path, **kwargs):
         self.f_path = f_path
         self.fmt_detector = FormatDetector()
 
@@ -178,11 +178,11 @@ class HttpOpener(object):
         For large files returns wrapped http stream.
     """
 
-    def __init__(self, url, timeout=10, attempts=42):
+    def __init__(self, url, timeout=10, attempts=42, force_download=False, **kwargs):
         self._filename = None
         self.url = url
         self.fmt_detector = FormatDetector()
-        self.force_download = None
+        self.force_download = force_download
         self.data_info = None
         self.timeout = timeout
         self.attempts = attempts
@@ -205,7 +205,7 @@ class HttpOpener(object):
             logger.info(
                 "Resource data is not gzipped and larger than 100MB. Reading from stream.."
             )
-            return HttpStreamWrapper(self.url)
+            return HttpStreamWrapper(self.url, **kwargs)
         else:
             downloaded_f_path = self.download_file(use_cache)
             if fmt == 'gzip':
@@ -316,7 +316,7 @@ class HttpStreamWrapper:
     makes http stream to look like file object
     """
 
-    def __init__(self, url):
+    def __init__(self, url, **kwargs):
         self.next = self.__next__
         self.url = url
         self.buffer = ''
@@ -445,7 +445,7 @@ class S3Opener(object):
         }
     """
 
-    def __init__(self, uri, credentials_path='/etc/yandex-tank/s3credentials.json'):
+    def __init__(self, uri, credentials_path='/etc/yandex-tank/s3credentials.json', **kwargs):
         # read s3 credentials
         # FIXME move to default config? which section and how securely store the keys?
         with open(credentials_path) as fname:
